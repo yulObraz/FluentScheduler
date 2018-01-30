@@ -9,6 +9,7 @@ namespace FluentScheduler.Model
 		internal int Duration { get; private set; }
 		internal int DayOfMonth { get; private set; }
 
+		public MonthOnLastDayOfMonthUnit(Schedule schedule, int duration, int dayOfMonth = 0)
 		{
 			Schedule = schedule;
 			Duration = duration;

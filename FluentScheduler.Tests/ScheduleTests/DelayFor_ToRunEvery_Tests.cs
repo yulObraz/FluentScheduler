@@ -78,8 +78,36 @@ namespace FluentScheduler.Tests.ScheduleTests
 
 			Assert.AreEqual(Math.Floor(expectedTime.TimeOfDay.TotalSeconds), Math.Floor(actualTime.TimeOfDay.TotalSeconds));
 		}
+		[Test]
+		public void Should_RunAfter_Future() {
+			string name = "RunAfter";
+			TaskManager.AddTask(() => { }, x => {
+				x.WithName(name).ToRunEvery(5).Hours().At(30).SkipHours(new TimeSpan(9, 0, 0), new TimeSpan(21, 0, 0));
+				x.RunAfter(DateTime.Now.AddDays(2).Add(new TimeSpan(18, 15, 0)).Subtract(DateTime.Now.TimeOfDay));
+			});
+			//DateTime expectedTime = DateTime.Now.AddYears(2);
 
+			DateTime actualTime = TaskManager.GetSchedule(name).NextRunTime;
+			Assert.AreEqual(DateTime.Now.AddDays(2).Date, actualTime.Date);
+			Assert.AreEqual(actualTime.Hour, 18);
+			TaskManager.RemoveTask(name);
+		}
+		[Test]
+		public void Should_RunAfter_Past() {
+			string name = "RunAfter";
+			TaskManager.AddTask(() => { }, x => {
+				x.WithName(name).ToRunEvery(12).Hours().At(30).SkipHours(new TimeSpan(9, 0, 0), new TimeSpan(21, 0, 0));
+				x.RunAfter(DateTime.Now.Subtract(DateTime.Now.TimeOfDay).Add(new TimeSpan(1,1,0)));
+			});
 
+			DateTime actualTime = TaskManager.GetSchedule(name).NextRunTime;
+			if(DateTime.Now.TimeOfDay< new TimeSpan(13,31,0))
+				Assert.AreEqual(DateTime.Now.Date, actualTime.Date);
+			else
+				Assert.AreEqual(DateTime.Now.AddDays(1).Date, actualTime.Date);
+			Assert.AreEqual(actualTime.Hour, 13);
+			TaskManager.RemoveTask(name);
+		}
 
 	}
 }

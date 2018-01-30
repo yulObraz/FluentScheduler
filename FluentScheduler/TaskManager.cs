@@ -76,6 +76,9 @@ namespace FluentScheduler
 			var immediateTasks = new List<Schedule>();
 			lock (typeof(TaskManager))
 			{
+				if(now == default(DateTime)) {
+					now = DateTime.Now;
+				}
 				_tasks = new List<Schedule>();
 
 				AddSchedules(registry.Schedules, immediateTasks, now);
@@ -104,6 +107,7 @@ namespace FluentScheduler
 			{
 				var info = new TaskStartScheduleInformation
 					{
+						Schedule = schedule,
 						Name = schedule.Name,
 						StartTime = startTime
 					};
@@ -117,6 +121,7 @@ namespace FluentScheduler
 			{
 				var info = new TaskEndScheduleInformation
 					{
+						Schedule = schedule,
 						Name = schedule.Name,
 						StartTime = startTime,
 						Duration = duration
@@ -159,6 +164,9 @@ namespace FluentScheduler
 				else
 				{
 					schedule.NextRunTime = schedule.CalculateNextRun(now.Add(schedule.DelayRunFor));
+					if(schedule.IsTimeValid) {
+						_tasks.Add(schedule);
+					}
 				}
 
 				foreach (var childSchedule in schedule.AdditionalSchedules)
@@ -169,6 +177,10 @@ namespace FluentScheduler
 						{
 							// delayed task
 							childSchedule.NextRunTime = now.Add(childSchedule.DelayRunFor);
+							if(childSchedule.IsTimeValid) 
+							{
+								_tasks.Add(childSchedule);
+							}
 						}
 						else
 						{
@@ -180,6 +192,9 @@ namespace FluentScheduler
 					else
 					{
 						childSchedule.NextRunTime = childSchedule.CalculateNextRun(now.Add(schedule.DelayRunFor));
+						if(childSchedule.IsTimeValid)
+						{
+							_tasks.Add(childSchedule);
 						}
 					}
 				}
@@ -297,7 +312,9 @@ namespace FluentScheduler
 				{
 					_tasks.Remove(task);
 				}
+				return true;
 			}
+			return false;
 		}
 
 		/// <summary>
@@ -347,6 +364,7 @@ namespace FluentScheduler
 				{
 					firstTask.TaskExecutions--;
 				}
+				if(firstTask.NextRunTime <= DateTime.Now || !firstTask.IsTimeValid || firstTask.TaskExecutions == 0)
 				{
 					lock (typeof(TaskManager))
 					{
