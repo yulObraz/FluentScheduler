@@ -57,6 +57,16 @@ namespace FluentScheduler.Extensions
 		}
 
 		/// <summary>
+		/// Gets a DateTime representing the day of week at the current week
+		/// </summary>
+		/// <param name="current">The current date</param>
+		/// <param name="dayOfWeek">The day of week for the next date to get</param>
+		public static DateTime Current(this DateTime current, DayOfWeek dayOfWeek) {
+			var offsetDays = dayOfWeek - current.DayOfWeek;
+			return current.AddDays(offsetDays);
+		}
+
+		/// <summary>
 		/// Gets a DateTime representing the first date following the current date which falls on the given day of the week
 		/// </summary>
 		/// <param name="current">The current date</param>
@@ -96,7 +106,7 @@ namespace FluentScheduler.Extensions
 		/// <param name="current">The current date</param>
 		public static DateTime ClearMinutesAndSeconds(this DateTime current)
 		{
-			return current.AddMinutes(-1 * current.Minute).AddSeconds(-1 * current.Second);
+			return current.AddMinutes(-1 * current.Minute).AddSeconds(-1 * current.Second).AddMilliseconds(-1 * current.Millisecond);
 		}
 
 		/// <summary>

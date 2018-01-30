@@ -7,14 +7,15 @@ namespace FluentScheduler.Model
 	{
 		internal Schedule Schedule { get; private set; }
 		internal int Duration { get; private set; }
+		internal int DayOfMonth { get; private set; }
 
-		public MonthOnLastDayOfMonthUnit(Schedule schedule, int duration)
 		{
 			Schedule = schedule;
 			Duration = duration;
+			DayOfMonth = dayOfMonth;
 			Schedule.CalculateNextRun = x => {
-				var nextRun = x.Date.Last();
-				return (x > nextRun) ? x.Date.First().AddMonths(Duration).Last() : x.Date.Last();
+				var nextRun = x.Date.Last().AddDays(-DayOfMonth);
+				return (x > nextRun) ? x.Date.AddMonths(Duration).Last().AddDays(-DayOfMonth) : nextRun;
 			};
 		}
 
@@ -27,8 +28,8 @@ namespace FluentScheduler.Model
 		public void At(int hours, int minutes)
 		{
 			Schedule.CalculateNextRun = x => {
-				var nextRun = x.Date.Last().AddHours(hours).AddMinutes(minutes);
-				return (x > nextRun) ? x.Date.First().AddMonths(Duration).Last().AddHours(hours).AddMinutes(minutes) : nextRun;
+				var nextRun = x.Date.Last().AddDays(-DayOfMonth).AddHours(hours).AddMinutes(minutes);
+				return (x > nextRun) ? x.Date.AddMonths(Duration).Last().AddDays(-DayOfMonth).AddHours(hours).AddMinutes(minutes) : nextRun;
 			};
 		}
 	}

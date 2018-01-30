@@ -71,12 +71,11 @@ namespace FluentScheduler
 		/// Initializes the task manager with all schedules configured in the specified registry
 		/// </summary>
 		/// <param name="registry">Registry containing task schedules</param>
-		public static void Initialize(Registry registry)
+		public static void Initialize(Registry registry, DateTime now = default(DateTime))
 		{
 			var immediateTasks = new List<Schedule>();
 			lock (typeof(TaskManager))
 			{
-				var now = DateTime.Now;
 				_tasks = new List<Schedule>();
 
 				AddSchedules(registry.Schedules, immediateTasks, now);
@@ -138,7 +137,7 @@ namespace FluentScheduler
 					if (schedule.DelayRunFor > TimeSpan.Zero)
 					{
 						// delayed task
-						schedule.NextRunTime = DateTime.Now.Add(schedule.DelayRunFor);
+						schedule.NextRunTime = now.Add(schedule.DelayRunFor);
 						_tasks.Add(schedule);
 					}
 					else
@@ -152,7 +151,7 @@ namespace FluentScheduler
 						var nextRun = child.CalculateNextRun(now.Add(child.DelayRunFor).AddMilliseconds(1));
 						if (!hasAdded || schedule.NextRunTime > nextRun)
 						{
-							schedule.NextRunTime = nextRun;
+							schedule.NextRunTime = nextRun;//possibly two calls
 							hasAdded = true;
 						}
 					}
@@ -160,7 +159,6 @@ namespace FluentScheduler
 				else
 				{
 					schedule.NextRunTime = schedule.CalculateNextRun(now.Add(schedule.DelayRunFor));
-					_tasks.Add(schedule);
 				}
 
 				foreach (var childSchedule in schedule.AdditionalSchedules)
@@ -170,8 +168,7 @@ namespace FluentScheduler
 						if (childSchedule.DelayRunFor > TimeSpan.Zero)
 						{
 							// delayed task
-							childSchedule.NextRunTime = DateTime.Now.Add(childSchedule.DelayRunFor);
-							_tasks.Add(childSchedule);
+							childSchedule.NextRunTime = now.Add(childSchedule.DelayRunFor);
 						}
 						else
 						{
@@ -183,7 +180,7 @@ namespace FluentScheduler
 					else
 					{
 						childSchedule.NextRunTime = childSchedule.CalculateNextRun(now.Add(schedule.DelayRunFor));
-						_tasks.Add(childSchedule);
+						}
 					}
 				}
 			}
@@ -256,10 +253,7 @@ namespace FluentScheduler
 			if (taskSchedule == null)
 				throw new ArgumentNullException("taskSchedule", "Please specify the task schedule to add to the task manager.");
 
-			var schedule = new Schedule(TaskFactory.GetTaskInstance<T>())
-				{
-					Name = typeof (T).Name
-				};
+			var schedule = new Schedule(TaskFactory.GetTaskInstance<T>());
 			AddTask(taskSchedule, schedule);
 		}
 
@@ -294,7 +288,7 @@ namespace FluentScheduler
 			RunAndInitializeSchedule(immediateTasks);
 		}
 
-		public static void RemoveTask(string name)
+		public static bool RemoveTask(string name)
 		{
 			var task = GetSchedule(name);
 			if (task != null)
@@ -353,7 +347,6 @@ namespace FluentScheduler
 				{
 					firstTask.TaskExecutions--;
 				}
-				if (firstTask.NextRunTime <= DateTime.Now || firstTask.TaskExecutions == 0)
 				{
 					lock (typeof(TaskManager))
 					{

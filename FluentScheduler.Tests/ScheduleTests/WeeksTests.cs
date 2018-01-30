@@ -84,7 +84,7 @@ namespace FluentScheduler.Tests.ScheduleTests
 		}
 
 		[Test]
-		public void Should_Set_Specific_Hour_And_Minute_If_On_Is_Specified_And_At_Method_Is_Called()
+		public void Should_Set_Specific_Hour_And_Minute_If_On_Is_Specified_And_At_Method_Is_Called_Before_Time()
 		{
 			var task = new Mock<ITask>();
 			var schedule = new Schedule(task.Object);
@@ -92,7 +92,7 @@ namespace FluentScheduler.Tests.ScheduleTests
 
 			var input = new DateTime(2000, 1, 1);
 			var scheduledTime = schedule.CalculateNextRun(input);
-			Assert.AreEqual(scheduledTime.Date, input.Date.AddDays(14));
+			Assert.AreEqual(scheduledTime.Date, input.Date);
 
 			Assert.AreEqual(scheduledTime.Hour, 3);
 			Assert.AreEqual(scheduledTime.Minute, 15);
@@ -108,11 +108,19 @@ namespace FluentScheduler.Tests.ScheduleTests
 
 			var input = new DateTime(2000, 1, 1, 1, 23, 25);
 			var scheduledTime = schedule.CalculateNextRun(input);
-			Assert.AreEqual(scheduledTime.Date, input.Date.AddDays(14));
+			Assert.AreEqual(scheduledTime.Date, input.Date, "when time is not come");
 
 			Assert.AreEqual(scheduledTime.Hour, 3);
 			Assert.AreEqual(scheduledTime.Minute, 15);
 			Assert.AreEqual(scheduledTime.Second, 0);
+
+			scheduledTime = schedule.CalculateNextRun(scheduledTime.AddMilliseconds(1));
+			Assert.AreEqual(scheduledTime.Date, input.Date.AddDays(14), "when time is come");
+
+			Assert.AreEqual(scheduledTime.Hour, 3);
+			Assert.AreEqual(scheduledTime.Minute, 15);
+			Assert.AreEqual(scheduledTime.Second, 0);
+
 		}
 
 		[Test]
@@ -125,7 +133,7 @@ namespace FluentScheduler.Tests.ScheduleTests
 			var input = new DateTime(2000, 1, 1); // Saturday
 			var scheduledTime = schedule.CalculateNextRun(input);
 
-			var expectedTime = new DateTime(2000, 1, 15);
+			var expectedTime = new DateTime(2000, 1, 1);
 			Assert.AreEqual(scheduledTime, expectedTime);
 		}
 
@@ -138,13 +146,14 @@ namespace FluentScheduler.Tests.ScheduleTests
 
 			var input = new DateTime(2000, 1, 1);
 			var scheduledTime = schedule.CalculateNextRun(input);
+			scheduledTime = schedule.CalculateNextRun(scheduledTime.AddMilliseconds(1));
 
 			var expectedTime = new DateTime(2000, 1, 16);
 			Assert.AreEqual(scheduledTime, expectedTime);
 		}
 
 		[Test]
-		public void Should_Pick_The_Next_Week_If_The_Day_Of_Week_Has_Passed()
+		public void Should_Pick_The_Next_Weekday_If_The_Day_Of_Week_Has_Passed()
 		{
 			var task = new Mock<ITask>();
 			var schedule = new Schedule(task.Object);
@@ -153,12 +162,12 @@ namespace FluentScheduler.Tests.ScheduleTests
 			var input = new DateTime(2000, 1, 5); // Wednesday
 			var scheduledTime = schedule.CalculateNextRun(input);
 
-			var expectedTime = new DateTime(2000, 1, 24);
+			var expectedTime = new DateTime(2000, 1, 10);
 			Assert.AreEqual(scheduledTime, expectedTime);
 		}
 
 		[Test]
-		public void Should_Pick_The_Next_Week_If_The_Day_Of_Week_Has_Passed_For_New_Weeks()
+		public void Should_Pick_The_Next_Week_If_The_Day_Of_Week_Is_Not_Near_Send_Date()
 		{
 			var task = new Mock<ITask>();
 			var schedule = new Schedule(task.Object);
@@ -167,12 +176,12 @@ namespace FluentScheduler.Tests.ScheduleTests
 			var input = new DateTime(2000, 1, 2); // Sunday
 			var scheduledTime = schedule.CalculateNextRun(input);
 
-			var expectedTime = new DateTime(2000, 1, 22);
+			var expectedTime = new DateTime(2000, 1, 8);
 			Assert.AreEqual(scheduledTime, expectedTime);
 		}
 
 		[Test]
-		public void Should_Pick_The_Next_Week_If_The_Day_Of_Week_Has_Passed_For_End_Of_Week()
+		public void Should_Pick_The_Next_Day_Of_Week_If_The_Day_Of_Week_Has_Passed()
 		{
 			var task = new Mock<ITask>();
 			var schedule = new Schedule(task.Object);
@@ -181,7 +190,7 @@ namespace FluentScheduler.Tests.ScheduleTests
 			var input = new DateTime(2000, 1, 1); // Saturday
 			var scheduledTime = schedule.CalculateNextRun(input);
 
-			var expectedTime = new DateTime(2000, 1, 16);
+			var expectedTime = new DateTime(2000, 1, 2);
 			Assert.AreEqual(scheduledTime, expectedTime);
 		}
 

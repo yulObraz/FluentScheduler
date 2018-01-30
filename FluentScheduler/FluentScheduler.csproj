@@ -41,8 +41,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Extensions\RunAfterExtensions.cs" />
     <Compile Include="Extensions\DelayForExtensions.cs" />
     <Compile Include="GenericEventHandler.cs" />
+    <Compile Include="Model\ChainUnit.cs" />
+    <Compile Include="Model\RunAfterUnit.cs" />
     <Compile Include="Model\MinuteUnit.cs" />
     <Compile Include="Model\SecondUnit.cs" />
     <Compile Include="Model\TaskExceptionInformation.cs" />

@@ -25,11 +25,32 @@ namespace FluentScheduler.Model
 		/// </summary>
 		/// <param name="minutes">0-59: Represents the minute of the hour</param>
 		/// <returns></returns>
-		public void At(int minutes)
+		public HourUnit At(int minutes)
 		{
 			Schedule.CalculateNextRun = x => {
-				var nextRun = x.ClearMinutesAndSeconds().AddMinutes(minutes);
-				return (Duration == 1 && x < nextRun) ? nextRun : nextRun.AddHours(Duration);
+				var nearestCall = x.ClearMinutesAndSeconds().AddMinutes(minutes);
+				if(x.Minute - minutes > 30) {
+					nearestCall = nearestCall.AddHours(1);
+				} else if(minutes - x.Minute> 30) {
+					nearestCall = nearestCall.AddHours(-1);
+				}
+				//var nextRun = x.AddHours(Duration-1).ClearMinutesAndSeconds().AddMinutes(minutes);
+				return (x < nearestCall) ? nearestCall : nearestCall.AddHours(Duration);
+			};
+			return this;
+		}
+		public void SkipHours(TimeSpan start, TimeSpan end) {
+			var old = Schedule.CalculateNextRun;
+			Schedule.CalculateNextRun = x => {
+				var nextRun = old(x);
+				while(start < end ? (nextRun.TimeOfDay < start || nextRun.TimeOfDay > end.Add(new TimeSpan(0,0,0,0,2))) : (nextRun.TimeOfDay < start && nextRun.TimeOfDay > end.Add(new TimeSpan(0,0,0,0,2)))) {
+					if(Duration % 24 == 0) {
+						nextRun = nextRun.AddHours(1);
+					} else {
+						nextRun = old(nextRun.AddMilliseconds(1));
+					}
+				}
+				return nextRun;
 			};
 		}
 	}

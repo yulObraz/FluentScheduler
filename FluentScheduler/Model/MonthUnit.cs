@@ -28,9 +28,9 @@ namespace FluentScheduler.Model
 		/// Schedules the specified task to run on the last day of the month.
 		/// </summary>
 		/// <returns></returns>
-		public MonthOnLastDayOfMonthUnit OnTheLastDay()
+		public MonthOnLastDayOfMonthUnit OnTheLastDay(int dayOfMonth = 0)
 		{
-			return new MonthOnLastDayOfMonthUnit(Schedule, Duration);
+			return new MonthOnLastDayOfMonthUnit(Schedule, Duration, dayOfMonth);
 		}
 
 		/// <summary>

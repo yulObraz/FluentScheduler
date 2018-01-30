@@ -79,5 +79,7 @@ namespace FluentScheduler.Tests.ScheduleTests
 			Assert.AreEqual(Math.Floor(expectedTime.TimeOfDay.TotalSeconds), Math.Floor(actualTime.TimeOfDay.TotalSeconds));
 		}
 
+
+
 	}
 }

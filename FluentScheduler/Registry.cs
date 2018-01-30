@@ -20,7 +20,7 @@ namespace FluentScheduler
 		// Schedule<MyTask>().ToRunEvery(1).Months().On(1).OfMonth().At(0, 15)
 		// Schedule<MyTask>().ToRunEvery(1).Months().On(1).Monday().At(0, 15)
 
-		internal List<Schedule> Schedules { get; private set; }
+		public List<Schedule> Schedules {  get; private set; }
 		internal bool AllTasksConfiguredAsNonReentrant { get; set; }
 
 		public Registry()

@@ -14,20 +14,18 @@ namespace FluentScheduler.Model
 			Schedule = schedule;
 			Duration = duration;
 			Day = day;
-			if (Duration > 0)
-			{
-				Schedule.CalculateNextRun = x => {
-					var nextRun = x.Date.AddDays(Duration * 7).ThisOrNext(day);
-					return (x > nextRun) ? nextRun.AddDays(Duration * 7) : nextRun;
-				};
-			}
-			else
-			{
-				Schedule.CalculateNextRun = x => {
-					var nextRun = x.Date.Next(day);
-					return (x > nextRun) ? nextRun.AddDays(7) : nextRun;
-				};
-			}
+			Schedule.CalculateNextRun = x => {
+				var nextRun = x.Date.Current(Day);
+				if(x > nextRun) {
+					if(x < nextRun.AddHours(1)) {
+						return nextRun.AddDays(Math.Max(Duration, 1) * 7);//set after previous run - adding duration
+					} else {
+						return nextRun.AddDays(7);//first run - on next suitable day
+					}
+				} else {
+					return nextRun;
+				}
+			};
 		}
 
 		/// <summary>
@@ -39,8 +37,16 @@ namespace FluentScheduler.Model
 		public void At(int hours, int minutes)
 		{
 			Schedule.CalculateNextRun = x => {
-				var nextRun = x.Date.AddDays(Duration * 7).ThisOrNext(Day).AddHours(hours).AddMinutes(minutes);
-				return (x > nextRun) ? nextRun.AddDays(Math.Max(Duration, 1) * 7) : nextRun;
+				var nextRun = x.Date.Current(Day).AddHours(hours).AddMinutes(minutes);
+				if(x > nextRun) {
+					if(x < nextRun.AddHours(1)) {
+						return nextRun.AddDays(Math.Max(Duration, 1) * 7);//set after previous run - adding duration
+					} else {
+						return nextRun.AddDays(7);//first run - on next suitable day
+					}
+				} else {
+					return nextRun;
+				}
 			};
 		}
 	}

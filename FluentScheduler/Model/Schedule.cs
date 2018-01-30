@@ -10,16 +10,17 @@ namespace FluentScheduler.Model
 
 		internal List<Action> Tasks { get; private set; }
 
-		internal Func<DateTime, DateTime> CalculateNextRun { get; set; }
+		public Func<DateTime, DateTime> CalculateNextRun { get; set; }
 
 		/// <summary>
 		/// The first execution of the task can be delayed by the interval defined here.
 		/// It will only delay the startup (first execution).
 		/// </summary>
-		internal TimeSpan DelayRunFor { get; set; }
-		internal ICollection<Schedule> AdditionalSchedules { get; set; }
-		internal Schedule Parent { get; set; }
-		internal int TaskExecutions { get; set; }
+		public TimeSpan DelayRunFor { get; set; }
+		public ICollection<Schedule> AdditionalSchedules { get; set; }
+		public Schedule Parent { get; set; }
+		public int TaskExecutions { get; set; }
+		public DateTime? LastRunTime { get; set; }
 
 		internal bool Reentrant { get; set; }
 
@@ -151,7 +152,41 @@ namespace FluentScheduler.Model
 
 			return new SpecificRunTime(this);
 		}
+		public SpecificRunTime ToRunAt(DateTime time) {
+			CalculateNextRun = x => {
+				var callTime = (DelayRunFor > TimeSpan.Zero ? time.Add(DelayRunFor) : time);
+				return x > callTime ? DateTime.MaxValue : callTime;
+			};
+			TaskExecutions = 1;
 
+			return new SpecificRunTime(this);
+		}
+
+		public Schedule Delay(TimeSpan time){
+			DelayRunFor = time;
+			return this;
+		}
+		public Schedule SetCalculateNextRun(Func<DateTime, DateTime> func){
+			CalculateNextRun = func;
+			return this;
+		}
+		public Schedule SetLastRunTime(DateTime time){
+			LastRunTime = time;
+			return this;
+		}
+		public TimeUnit AndEvery(int interval) {
+			var parent = Parent ?? this;
+
+			var child = new Schedule(Tasks) {
+				Parent = parent,
+				Reentrant = parent.Reentrant,
+				Name = parent.Name
+			};
+
+			parent.AdditionalSchedules.Add(child);
+
+			return child.ToRunEvery(interval);
+		}
 		/// <summary>
 		/// Provide a name for this schedule
 		/// </summary>
@@ -171,6 +206,11 @@ namespace FluentScheduler.Model
 		{
 			Reentrant = false;
 			return this;
+		}
+		public bool IsTimeValid {
+			get {
+				return NextRunTime != DateTime.MaxValue && (LastRunTime == null || NextRunTime <= LastRunTime) && (Parent == null || Parent.LastRunTime == null || NextRunTime <= Parent.LastRunTime);
+			}
 		}
 	}
 }
